@@ -1634,7 +1634,7 @@ export default function App() {
               <Archive className="w-6 h-6 text-brand group-hover:scale-110 transition-transform" />
             </div>
             <div className="space-y-1">
-              <h1 className="font-black text-white tracking-tighter text-2xl uppercase leading-none italic">EDIT.ABB</h1>
+              <h1 className="font-black text-white tracking-tighter text-2xl uppercase leading-none italic">EDITAH</h1>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] leading-none">Magnitude Audit Engine</span>
                 <div 
@@ -1820,7 +1820,7 @@ export default function App() {
               <Archive className="w-5 h-5 text-brand" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-white uppercase tracking-widest leading-none">EDIT.ABB CORE</p>
+              <p className="text-[10px] font-black text-white uppercase tracking-widest leading-none">EDITAH CORE</p>
               <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">Terminal Production Edition</p>
             </div>
           </div>
