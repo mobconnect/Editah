@@ -23,7 +23,10 @@ import {
   Save,
   Wrench,
   Loader2,
-  Zap
+  Zap,
+  Edit2,
+  Trash2,
+  Check
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
@@ -890,6 +893,66 @@ function BundleExplorer({
   const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
 
+  const [renamingFile, setRenamingFile] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const [isRenamingLoading, setIsRenamingLoading] = useState(false);
+  const [isConvertingIos, setIsConvertingIos] = useState(false);
+
+  const handleDownloadFile = (filePath: string) => {
+    const url = `/api/bundle/${bundle.bundleId}/file?path=${encodeURIComponent(filePath)}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filePath.split('/').pop() || 'resource';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleRenameFileSubmit = async (oldPath: string) => {
+    if (!newName.trim()) return;
+    setIsRenamingLoading(true);
+    try {
+      const response = await fetch('/api/rename-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bundleId: bundle.bundleId,
+          oldPath: oldPath,
+          newPath: newName.trim()
+        })
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to rename file');
+      }
+      const data = await response.json();
+      onFixApplied(data.files, `Renamed ${oldPath} to ${newName.trim()}`, [`Renamed file`]);
+      setRenamingFile(null);
+      setNewName("");
+    } catch (err: any) {
+      alert(err.message || "An error occurred while renaming.");
+    } finally {
+      setIsRenamingLoading(false);
+    }
+  };
+
+  const handleConvertToIos = async () => {
+    setIsConvertingIos(true);
+    try {
+      const url = `/api/bundle/${bundle.bundleId}/convert-ios`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${bundle.bundleId}-ios-reverted.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err.message || 'Failed to trigger iOS conversion.');
+    } finally {
+      setIsConvertingIos(false);
+    }
+  };
+
   const filteredFiles = bundle.files.filter(f => 
     !f.isDirectory && f.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -979,6 +1042,19 @@ function BundleExplorer({
               </motion.div>
             )}
           </AnimatePresence>
+          <button 
+            onClick={handleConvertToIos}
+            disabled={isConvertingIos}
+            className="flex items-center gap-2 px-8 py-4 bg-zinc-900 text-zinc-400 border border-white/5 rounded-2xl font-black uppercase text-xs tracking-widest hover:text-white hover:border-white/20 transition-all active:scale-95 disabled:opacity-50"
+            title="Convert and export resources to iOS native layout"
+          >
+            {isConvertingIos ? (
+              <Loader2 className="w-4 h-4 animate-spin text-brand" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-brand" />
+            )}
+            Revert iOS iPhone
+          </button>
           <button 
             onClick={() => setIsAddModalOpen(true)}
             className="px-8 py-4 bg-zinc-900 text-zinc-400 border border-white/5 rounded-2xl font-black uppercase text-xs tracking-widest hover:text-white hover:border-white/20 transition-all active:scale-95"
@@ -1197,10 +1273,43 @@ function BundleExplorer({
                       <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 group-hover:border-brand/40 flex items-center justify-center transition-colors">
                         {getFileIcon(file.name)}
                       </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-bold text-zinc-300 truncate tracking-tight group-hover:text-white transition-colors" title={file.name}>
-                          {file.name}
-                        </span>
+                      <div className="flex flex-col min-w-0 w-full">
+                        {renamingFile === file.name ? (
+                          <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="text"
+                              value={newName}
+                              onChange={(e) => setNewName(e.target.value)}
+                              className="bg-zinc-900 border border-brand/40 rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-brand w-72"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleRenameFileSubmit(file.name);
+                                if (e.key === 'Escape') setRenamingFile(null);
+                              }}
+                            />
+                            <button
+                              onClick={() => handleRenameFileSubmit(file.name)}
+                              disabled={isRenamingLoading}
+                              className="p-2 bg-brand/20 border border-brand/30 text-brand rounded-lg hover:bg-brand hover:text-white transition-all shrink-0"
+                            >
+                              {isRenamingLoading ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setRenamingFile(null)}
+                              className="p-2 bg-zinc-850 border border-white/5 text-zinc-400 rounded-lg hover:bg-zinc-700 hover:text-white transition-all shrink-0"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-sm font-bold text-zinc-300 truncate tracking-tight group-hover:text-white transition-colors" title={file.name}>
+                            {file.name}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -1208,15 +1317,53 @@ function BundleExplorer({
                     <span className="text-[11px] font-black text-zinc-500 font-mono tracking-tighter uppercase">{formatSize(file.size)}</span>
                   </td>
                   <td className="px-10 py-6 text-right" onClick={(e) => e.stopPropagation()}>
-                    <button 
-                      onClick={() => {
-                        setReplacingFile(file.name);
-                        replaceInputRef.current?.click();
-                      }}
-                      className="text-[10px] font-black text-brand uppercase tracking-widest opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all hover:brightness-125 px-4 py-2 bg-brand/10 rounded-lg border border-brand/20 shadow-sm"
-                    >
-                      Overwrite
-                    </button>
+                    <div className="flex items-center justify-end gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Download */}
+                      <button 
+                        onClick={() => handleDownloadFile(file.name)}
+                        className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg text-zinc-400 hover:text-white transition-all"
+                        title="Download file"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Rename */}
+                      <button 
+                        onClick={() => {
+                          setRenamingFile(file.name);
+                          setNewName(file.name);
+                        }}
+                        className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg text-zinc-400 hover:text-white transition-all"
+                        title="Rename file"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Overwrite */}
+                      <button 
+                        onClick={() => {
+                          setReplacingFile(file.name);
+                          replaceInputRef.current?.click();
+                        }}
+                        className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg text-brand hover:brightness-110 transition-all"
+                        title="Overwrite file"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Delete */}
+                      <button 
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete ${file.name}?`)) {
+                            onBatchAction('delete', [file.name]);
+                          }
+                        }}
+                        className="p-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg text-rose-400 hover:text-rose-300 transition-all"
+                        title="Delete file"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
