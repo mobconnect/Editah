@@ -701,6 +701,78 @@ app.get('/api/bundle/:bundleId', (req, res) => {
   });
 });
 
+// API: Get Individual File Content
+app.get('/api/bundle/:bundleId/file', (req, res) => {
+  const { bundleId } = req.params;
+  const filePath = req.query.path as string;
+  
+  if (!filePath) {
+    return res.status(400).json({ error: 'File path parameter is required' });
+  }
+
+  const state = activeBundles.get(bundleId);
+  if (!state) return res.status(404).json({ error: 'Bundle not found' });
+
+  try {
+    const zip = new AdmZip(state.versions[state.currentIndex].buffer);
+    const entry = zip.getEntry(filePath);
+    if (!entry) {
+      return res.status(404).json({ error: `File not found in bundle: ${filePath}` });
+    }
+
+    if (entry.isDirectory) {
+      return res.status(400).json({ error: 'Cannot view directory contents' });
+    }
+
+    const buffer = entry.getData();
+    
+    // Determine content type and formatting
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === '.xml') {
+      res.setHeader('Content-Type', 'text/xml');
+      return res.send(buffer.toString('utf8'));
+    } else if (['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.ico'].includes(ext)) {
+      const mimeTypes: { [key: string]: string } = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.webp': 'image/webp',
+        '.gif': 'image/gif',
+        '.bmp': 'image/bmp',
+        '.ico': 'image/x-icon'
+      };
+      res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+      return res.send(buffer);
+    } else if (['.json', '.txt', '.properties', '.cfg', '.html', '.md', '.yml', '.yaml', '.gradle', '.pro', '.conf'].includes(ext)) {
+      res.setHeader('Content-Type', 'text/plain');
+      return res.send(buffer.toString('utf8'));
+    } else {
+      // Default fallback as text if it seems readable, or octet-stream
+      // Let's do a simple heuristic check to see if it's text
+      let isBinary = false;
+      const checkLength = Math.min(buffer.length, 512);
+      for (let i = 0; i < checkLength; i++) {
+        const charCode = buffer[i];
+        if (charCode === 0) {
+          isBinary = true;
+          break;
+        }
+      }
+      
+      if (!isBinary) {
+        res.setHeader('Content-Type', 'text/plain');
+        return res.send(buffer.toString('utf8'));
+      }
+      
+      res.setHeader('Content-Type', 'application/octet-stream');
+      return res.send(buffer);
+    }
+  } catch (err: any) {
+    console.error('File fetch error:', err);
+    res.status(500).json({ error: err.message || 'Failed to read file from bundle' });
+  }
+});
+
 app.post('/api/replace-file', upload.single('file'), (req, res) => {
   const { bundleId, targetPath } = req.body;
   const zip = getCurrentZip(bundleId);

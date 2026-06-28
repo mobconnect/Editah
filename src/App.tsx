@@ -30,6 +30,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { ApkSigner } from './components/ApkSigner';
 import { SaveToWorkspaceModal } from './components/SaveToWorkspaceModal';
+import { FilePreviewModal } from './components/FilePreviewModal';
 
 // --- Types ---
 interface BundleFile {
@@ -886,6 +887,7 @@ function BundleExplorer({
   const [isSaveToWorkspaceModalOpen, setIsSaveToWorkspaceModalOpen] = useState(false);
   const [isAIAnalyzing, setIsAIAnalyzing] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
 
   const filteredFiles = bundle.files.filter(f => 
@@ -1020,6 +1022,18 @@ function BundleExplorer({
         onClose={() => setIsSaveToWorkspaceModalOpen(false)}
         bundleId={bundle.bundleId}
         defaultName={bundle.name}
+      />
+
+      <FilePreviewModal 
+        isOpen={previewFile !== null}
+        onClose={() => setPreviewFile(null)}
+        bundleId={bundle.bundleId}
+        filePath={previewFile ? previewFile.name : null}
+        fileSize={previewFile ? previewFile.size : 0}
+        onReplace={(targetPath, file) => {
+          onReplace(targetPath, file);
+          setPreviewFile(null);
+        }}
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
@@ -1168,7 +1182,7 @@ function BundleExplorer({
                     "hover:bg-white/[0.03] transition-colors group cursor-pointer",
                     selectedFiles.has(file.name) && "bg-brand/5"
                   )}
-                  onClick={() => toggleSelection(file.name)}
+                  onClick={() => setPreviewFile({ name: file.name, size: file.size })}
                 >
                   <td className="px-10 py-6 w-10" onClick={(e) => e.stopPropagation()}>
                     <input 
@@ -1829,7 +1843,7 @@ export default function App() {
               <a key={link} href="#" className="text-[10px] font-black text-zinc-600 hover:text-white uppercase tracking-[0.2em] transition-colors">{link}</a>
             ))}
           </div>
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest italic">&copy; 2024 MAGNITUDE FOUNDATION</p>
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest italic">&copy; 2026 justbeyou Editah</p>
         </div>
       </footer>
     </div>
