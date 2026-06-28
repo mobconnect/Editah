@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand: #6366f1;
+  --color-surface-low: #09090b;
+  --color-surface: #18181b;
+  --color-surface-high: #27272a;
+}
+
+@layer base {
+  body {
+    @apply bg-surface-low text-zinc-100 antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+  }
+}
+
+.glass {
+  @apply backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] shadow-2xl;
+}
+
+.glass-dark {
+  @apply backdrop-blur-2xl bg-black/40 border border-white/[0.05] shadow-inner;
+}
+
+.grid-bg {
+  background-image: 
+    radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+@keyframes scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
+}
+
+.scanline {
+  @apply absolute inset-0 w-full h-1 bg-brand/20 blur-sm pointer-events-none;
+  animation: scan 3s linear infinite;
+}

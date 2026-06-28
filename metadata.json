@@ -1,0 +1,6 @@
+{
+  "name": "edit.abb",
+  "description": "An online tool to inspect and modify Android App Bundle (AAB) metadata and resources.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

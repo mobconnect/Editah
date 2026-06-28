@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    // Configurations: Admins only (or anyone signed in for now as it's a simple tool)
+    match /configurations/{configId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(configId);
+    }
+
+    // Bundle Metadata
+    match /bundles/{bundleId}/tokens/{tokenId} {
+      allow read: if isSignedIn() && isValidId(bundleId);
+      allow write: if isSignedIn() && isValidId(bundleId) && isValidId(tokenId);
+    }
+  }
+}

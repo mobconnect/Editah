@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "Configuration": {
+      "title": "Application Configuration",
+      "description": "Global settings and business metadata",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["key", "value", "updatedAt"]
+    },
+    "BundleMetadata": {
+      "title": "Bundle Metadata",
+      "description": "Tokens and metadata associated with specific bundles",
+      "type": "object",
+      "properties": {
+        "bundleId": { "type": "string" },
+        "token": { "type": "string" },
+        "duns": { "type": "string" },
+        "companyName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["bundleId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/configurations/{configId}": {
+      "schema": "Configuration",
+      "description": "Global persistent settings"
+    },
+    "/bundles/{bundleId}/tokens/{tokenId}": {
+      "schema": "BundleMetadata",
+      "description": "Integrity tokens and company info per bundle"
+    }
+  }
+}
