@@ -12,9 +12,19 @@ View your app in AI Studio: https://ai.studio/apps/2e2e147a-ffc2-445c-b0b2-5f3e8
 
 **Prerequisites:**  Node.js
 
-
 1. Install dependencies:
    `npm install`
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Business details
+
+- Business name: Jessica Bright
+- ABN: 59 726 146 692
+- Website: https://justbeyou.com.au
+- Domain: justbeyou.com.au
+
+## Support
+
+For support or business enquiries, visit https://justbeyou.com.au
